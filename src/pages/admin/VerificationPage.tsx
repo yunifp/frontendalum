@@ -1,17 +1,43 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter, 
+  DialogDescription 
+} from '@/components/ui/dialog';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import {
   CheckCircle,
   XCircle,
   Loader2,
   UserCheck,
   Clock,
-  MoreVertical,
+  MoreHorizontal,
   ShieldAlert,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useVerification } from '@/hooks/useVerification';
@@ -35,7 +61,12 @@ export default function VerificationPage() {
     handleUpdateStatus
   } = useVerification();
 
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // State untuk Paginasi Client-side
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
+
   const [modal, setModal] = useState<ConfirmModalState>({
     isOpen: false,
     userId: 0,
@@ -47,19 +78,17 @@ export default function VerificationPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Reset page ke 0 ketika melakukan pencarian
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
+
   if (user?.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
 
-  useEffect(() => {
-    const handleScroll = () => setActiveDropdown(null);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // Handler membuka modal konfirmasi
   const openConfirmModal = (id: number, name: string, action: 'ACTIVE' | 'REJECTED') => {
-    setActiveDropdown(null); // Tutup menu dropdown
     setModal({
       isOpen: true,
       userId: id,
@@ -76,202 +105,246 @@ export default function VerificationPage() {
     }
   };
 
+  // Filter & Paginasi Data
+  const filteredUsers = users.filter(u => 
+    u.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.nim.includes(searchTerm)
+  );
+  
+  const pageCount = Math.ceil(filteredUsers.length / pageSize);
+  const paginatedUsers = filteredUsers.slice(
+    currentPage * pageSize, 
+    (currentPage + 1) * pageSize
+  );
+
   return (
-    <div className="space-y-8 relative">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-indigo-950 flex items-center gap-3">
-          <UserCheck className="h-8 w-8 text-indigo-700" />
-          Verifikasi Pengguna
-        </h1>
-        <p className="text-slate-500 font-medium mt-1">
-          Kelola persetujuan dan status akses untuk pengguna yang terdaftar.
-        </p>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Verifikasi Pengguna</h1>
+          <p className="text-sm text-slate-500">Kelola persetujuan dan status akses untuk pengguna yang terdaftar.</p>
+        </div>
       </div>
 
-      <Card className="border-slate-100 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white">
-        <CardHeader className="border-b border-slate-50 bg-slate-50/50 px-8 py-5 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-            Daftar Pengguna
-          </CardTitle>
-          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
-            {users.length} Total Data
-          </Badge>
-        </CardHeader>
+      {/* Search Bar - Hanya muncul jika ada data user */}
+      {users.length > 0 && (
+        <div className="flex items-center px-3 border rounded-xl bg-white shadow-sm max-w-md focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+          <Search className="w-4 h-4 text-gray-400" />
+          <Input 
+            className="border-0 focus-visible:ring-0 text-sm"
+            placeholder="Cari nama atau NIM pendaftar..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
 
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-              <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
-              <p className="font-medium">Memuat data pengguna...</p>
-            </div>
-          ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-              <UserCheck className="h-14 w-14 text-slate-200 mb-4" />
-              <p className="font-medium text-lg">Belum ada data pendaftar.</p>
-            </div>
-          ) : (
-            <div className="overflow-visible min-h-[300px]">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-slate-500 bg-slate-50/80 uppercase font-bold border-b border-slate-100">
-                  <tr>
-                    <th className="px-8 py-4">Informasi Pengguna</th>
-                    <th className="px-6 py-4">Kontak</th>
-                    <th className="px-6 py-4">Waktu Daftar</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-8 py-4 text-center w-24">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/70 transition-colors group">
-                      <td className="px-8 py-5">
-                        <div className="font-bold text-indigo-950 text-base">{u.username}</div>
-                        <div className="text-slate-500 font-medium mt-0.5">NIM: {u.nim}</div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="text-slate-700 font-medium">{u.email}</div>
-                        <div className="text-slate-500 text-xs mt-1">{u.hp || '-'}</div>
-                      </td>
-                      <td className="px-6 py-5 text-slate-600 font-medium">
-                        {new Date(u.createdAt).toLocaleDateString('id-ID', {
-                          day: 'numeric', month: 'short', year: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-5">
-                        {u.status === 'PENDING' && (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 px-3 py-1">
-                            <Clock className="w-3.5 h-3.5 mr-1.5" /> Tertunda
-                          </Badge>
-                        )}
-                        {u.status === 'ACTIVE' && (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1">
-                            <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Aktif
-                          </Badge>
-                        )}
-                        {u.status === 'REJECTED' && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 px-3 py-1">
-                            <XCircle className="w-3.5 h-3.5 mr-1.5" /> Ditolak
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-8 py-5 text-center relative">
-                        {processingId === u.id ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-indigo-600 mx-auto" />
-                        ) : (
-                          <>
-                            {/* Tombol Kebab Menu */}
-                            <button
-                              onClick={() => setActiveDropdown(activeDropdown === u.id ? null : u.id)}
-                              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-indigo-100"
+      {/* Table Section */}
+      <div className="border rounded-xl bg-white overflow-hidden shadow-sm border-slate-200">
+        <Table>
+          <TableHeader className="bg-slate-50/80 backdrop-blur-sm sticky top-0 z-10">
+            <TableRow className="hover:bg-transparent border-b border-slate-200">
+              <TableHead className="h-12 px-4 text-center align-middle font-bold text-[11px] uppercase text-slate-600 w-16">
+                No
+              </TableHead>
+              <TableHead className="h-12 px-4 text-left align-middle font-bold text-[11px] uppercase text-slate-600">
+                Informasi Pengguna
+              </TableHead>
+              <TableHead className="h-12 px-4 text-left align-middle font-bold text-[11px] uppercase text-slate-600">
+                Kontak
+              </TableHead>
+              <TableHead className="h-12 px-4 text-left align-middle font-bold text-[11px] uppercase text-slate-600">
+                Waktu Daftar
+              </TableHead>
+              <TableHead className="h-12 px-4 text-left align-middle font-bold text-[11px] uppercase text-slate-600">
+                Status
+              </TableHead>
+              <TableHead className="h-12 px-4 text-right align-middle font-bold text-[11px] uppercase text-slate-600">
+                Aksi
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-20">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="animate-spin mx-auto text-indigo-600" />
+                    <p className="text-xs text-slate-400 font-medium tracking-wide">Memuat data pengguna...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : paginatedUsers.length > 0 ? (
+              paginatedUsers.map((u, index) => (
+                <TableRow 
+                  key={u.id} 
+                  className="group hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
+                >
+                  <TableCell className="px-4 py-3 align-middle text-center text-xs font-mono text-slate-500">
+                    {(currentPage * pageSize) + index + 1}
+                  </TableCell>
+                  
+                  <TableCell className="px-4 py-3 align-middle">
+                    <div className="flex flex-col py-1">
+                      <span className="font-bold text-xs uppercase text-slate-900">{u.username}</span>
+                      <span className="text-[10px] text-slate-500 font-mono mt-0.5">NIM: {u.nim}</span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 align-middle">
+                     <div className="flex flex-col gap-1 py-1">
+                        <div className="text-xs text-slate-600">{u.email}</div>
+                        <div className="text-[10px] text-slate-500">{u.hp || 'Belum diisi'}</div>
+                     </div>
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 align-middle text-xs text-slate-600 font-medium">
+                    {new Date(u.createdAt).toLocaleDateString('id-ID', {
+                      day: 'numeric', month: 'short', year: 'numeric'
+                    })}
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 align-middle">
+                    {u.status === 'PENDING' && (
+                      <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-100 text-[10px] px-2 py-0.5">
+                        <Clock className="w-3 h-3 mr-1" /> Tertunda
+                      </Badge>
+                    )}
+                    {u.status === 'ACTIVE' && (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[10px] px-2 py-0.5">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Aktif
+                      </Badge>
+                    )}
+                    {u.status === 'REJECTED' && (
+                      <Badge variant="outline" className="bg-red-50 text-red-600 border-red-100 text-[10px] px-2 py-0.5">
+                        <XCircle className="w-3 h-3 mr-1" /> Ditolak
+                      </Badge>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 align-middle text-right">
+                    {processingId === u.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-indigo-600 inline-block mr-2" />
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {u.status !== 'ACTIVE' && (
+                            <DropdownMenuItem 
+                              onClick={() => openConfirmModal(u.id, u.username, 'ACTIVE')} 
+                              className="cursor-pointer text-emerald-600 focus:text-emerald-700"
                             >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
+                              <CheckCircle2 className="w-4 h-4 mr-2" /> Setujui / Aktifkan
+                            </DropdownMenuItem>
+                          )}
 
-                            {/* Dropdown Menu */}
-                            {activeDropdown === u.id && (
-                              <>
-                                {/* Invisible overlay untuk menutup dropdown jika klik di luar */}
-                                <div
-                                  className="fixed inset-0 z-10"
-                                  onClick={() => setActiveDropdown(null)}
-                                />
+                          {u.status !== 'REJECTED' && (
+                            <DropdownMenuItem 
+                              onClick={() => openConfirmModal(u.id, u.username, 'REJECTED')} 
+                              className="cursor-pointer text-red-600 focus:text-red-700"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" /> Tolak Akses
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-48 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="p-4 bg-slate-50 rounded-full">
+                      <UserCheck className="w-10 h-10 text-slate-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-slate-700">Belum ada data pendaftar ditemukan.</p>
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-                                <div className="absolute right-8 top-12 mt-1 w-48 bg-white border border-slate-100 shadow-xl shadow-slate-200/50 rounded-xl overflow-hidden z-20 animate-in fade-in slide-in-from-top-2">
-                                  <div className="py-1">
-                                    {/* Opsi Aktifkan (Muncul jika status bukan ACTIVE) */}
-                                    {u.status !== 'ACTIVE' && (
-                                      <button
-                                        onClick={() => openConfirmModal(u.id, u.username, 'ACTIVE')}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 transition-colors"
-                                      >
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        Setujui / Aktifkan
-                                      </button>
-                                    )}
-
-                                    {/* Opsi Tolak (Muncul jika status bukan REJECTED) */}
-                                    {u.status !== 'REJECTED' && (
-                                      <button
-                                        onClick={() => openConfirmModal(u.id, u.username, 'REJECTED')}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                                      >
-                                        <XCircle className="w-4 h-4" />
-                                        Tolak Akses
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {modal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md mx-4 bg-white rounded-3xl shadow-2xl">
-            <div className="p-8 flex flex-col items-center text-center">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 ${modal.action === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                {modal.action === 'ACTIVE' ? (
-                  <CheckCircle2 className="w-7 h-7" />
-                ) : (
-                  <ShieldAlert className="w-7 h-7" />
-                )}
-              </div>
-
-              <h3 className="text-xl font-extrabold text-slate-900 mb-2">
-                Konfirmasi {modal.action === 'ACTIVE' ? 'Persetujuan' : 'Penolakan'}
-              </h3>
-
-              <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-sm">
-                Apakah Anda yakin ingin{" "}
-                <strong className={modal.action === 'ACTIVE' ? 'text-emerald-600' : 'text-red-600'}>
-                  {modal.action === 'ACTIVE' ? 'menyetujui' : 'menolak'}
-                </strong>{" "}
-                pengguna bernama{" "}
-                <span className="text-slate-800 font-bold">"{modal.userName}"</span>?
-                {modal.action === 'REJECTED' && " Pengguna ini tidak akan bisa mengakses sistem."}
-              </p>
-
-              <div className="flex gap-3 w-full">
-                <Button
-                  variant="outline"
-                  className="flex-1 font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
-                  onClick={() =>
-                    setModal({
-                      isOpen: false,
-                      userId: 0,
-                      userName: "",
-                      action: null
-                    })
-                  }
-                >
-                  Batal
-                </Button>
-
-                <Button
-                  className={`flex-1 font-bold text-white ${modal.action === "ACTIVE"
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-red-600 hover:bg-red-700"
-                    }`}
-                  onClick={onConfirmAction}
-                >
-                  Ya, Lanjutkan
-                </Button>
-              </div>
-            </div>
+      {/* Paginasi Area */}
+      {users.length > 0 && (
+        <div className="flex items-center justify-between px-2 py-2 border-t pt-4">
+          <div className="text-xs text-slate-500">Total {filteredUsers.length} data</div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))} 
+              disabled={currentPage === 0 || isLoading}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.min(pageCount - 1, prev + 1))} 
+              disabled={currentPage >= pageCount - 1 || isLoading || pageCount === 0}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Persetujuan / Penolakan */}
+      <Dialog open={modal.isOpen} onOpenChange={(isOpen) => !isOpen && setModal({ isOpen: false, userId: 0, userName: "", action: null })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full mb-4 ${
+              modal.action === 'ACTIVE' ? 'bg-emerald-100' : 'bg-red-100'
+            }`}>
+              {modal.action === 'ACTIVE' ? (
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              ) : (
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              )}
+            </div>
+            <DialogTitle className="text-center text-xl">
+              Konfirmasi {modal.action === 'ACTIVE' ? 'Persetujuan' : 'Penolakan'}
+            </DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              Apakah Anda yakin ingin{" "}
+              <strong className={modal.action === 'ACTIVE' ? 'text-emerald-600' : 'text-red-600'}>
+                {modal.action === 'ACTIVE' ? 'menyetujui' : 'menolak'}
+              </strong>{" "}
+              pengguna bernama <strong className="text-slate-900">{modal.userName}</strong>?
+              {modal.action === 'REJECTED' && " Pengguna ini tidak akan bisa mengakses sistem."}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="flex sm:justify-center gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setModal({ isOpen: false, userId: 0, userName: "", action: null })}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              className={`flex-1 ${modal.action === "ACTIVE" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
+              onClick={onConfirmAction}
+            >
+              Ya, Lanjutkan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

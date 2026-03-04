@@ -12,29 +12,29 @@ import {
 
 export default function DashboardPage() {
   const statsData = [
-    { 
-      title: 'Total Alumni Terdaftar', 
-      value: '2,845', 
-      desc: '+12% dari bulan lalu', 
-      icon: Users, 
-      color: 'text-indigo-600', 
-      bg: 'bg-indigo-50' 
+    {
+      title: 'Total Alumni Terdaftar',
+      value: '2,845',
+      desc: '+12% dari bulan lalu',
+      icon: Users,
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50'
     },
-    { 
-      title: 'Angkatan Aktif', 
-      value: '42', 
-      desc: 'Tersebar di berbagai program studi', 
-      icon: GraduationCap, 
-      color: 'text-orange-600', 
-      bg: 'bg-orange-50' 
+    {
+      title: 'Angkatan Aktif',
+      value: '42',
+      desc: 'Tersebar di berbagai program studi',
+      icon: GraduationCap,
+      color: 'text-orange-600',
+      bg: 'bg-orange-50'
     },
-    { 
-      title: 'Peluang Karir', 
-      value: '156', 
-      desc: 'Lowongan pekerjaan baru minggu ini', 
-      icon: Briefcase, 
-      color: 'text-emerald-600', 
-      bg: 'bg-emerald-50' 
+    {
+      title: 'Peluang Karir',
+      value: '156',
+      desc: 'Lowongan pekerjaan baru minggu ini',
+      icon: Briefcase,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50'
     },
   ];
 
@@ -60,7 +60,7 @@ export default function DashboardPage() {
           <span className="text-sm font-bold text-orange-700">Data Terkini</span>
         </div>
       </div>
-      
+
       <div className="grid gap-6 md:grid-cols-3">
         {statsData.map((stat, i) => (
           <Card key={i} className="border border-slate-200 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden group hover:-translate-y-1 transition-all duration-300">
@@ -86,27 +86,27 @@ export default function DashboardPage() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="date" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} 
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
                 dy={10}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
               />
-              <Tooltip 
+              <Tooltip
                 cursor={{ fill: '#e0e7ff', opacity: 0.4 }}
                 contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold', color: '#312e81' }}
               />
-              <Bar 
-                dataKey="count" 
-                fill="#312e81" 
-                radius={[6, 6, 0, 0]} 
-                name="Aktivitas" 
+              <Bar
+                dataKey="count"
+                fill="#312e81"
+                radius={[6, 6, 0, 0]}
+                name="Aktivitas"
                 animationDuration={1500}
               />
             </BarChart>
