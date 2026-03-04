@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/admin/DashboardPage';
 import VerificationPage from './pages/admin/VerificationPage';
 import { Toaster } from '@/components/ui/sonner';
+import AlumniManagementPage from './pages/admin/AlumniManagementPage';
 
 function Root() {
   return (
@@ -15,7 +16,11 @@ function Root() {
       <AuthProvider>
         <Outlet />
       </AuthProvider>
-      <Toaster position="top-right" richColors />
+      <Toaster
+        position="top-right"
+        richColors
+        visibleToasts={1}
+      />
     </>
   );
 }
@@ -51,6 +56,10 @@ const router = createBrowserRouter([
               {
                 path: 'verification',
                 element: <VerificationPage />
+              },
+              {
+                path: 'alumni',
+                element: <AlumniManagementPage />
               },
               {
                 path: 'alumni',
