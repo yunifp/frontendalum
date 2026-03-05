@@ -32,7 +32,6 @@ import {
   UserCheck,
   Clock,
   MoreHorizontal,
-  ShieldAlert,
   CheckCircle2,
   Search,
   ChevronLeft,

@@ -1,22 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback } from 'react';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
 
 export const useProfile = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [prodis, setProdis] = useState<any[]>([]);
 
-    // Ambil data profile lengkap termasuk relasi Prodi & Fakultas
     const getProfileById = useCallback(async (id: number) => {
         setIsLoading(true);
         try {
-            const response = await api.post('/master/profile', {
-                action: 'GET_BY_ID',
-                id
-            });
+            const response = await api.post('/master/profile', { action: 'GET_BY_ID', id });
             return response.data.data;
-        } catch (error: any) {
+        } catch {
             toast.error("Gagal memuat profil");
             return null;
         } finally {
@@ -24,14 +20,19 @@ export const useProfile = () => {
         }
     }, []);
 
+    const fetchProdis = useCallback(async () => {
+        try {
+            const response = await api.post('/master/fakultas-prodi/prodi', { action: 'GET_ALL' });
+            setProdis(response.data.data);
+        } catch (error) {
+            console.error("Error fetching prodis", error);
+        }
+    }, []);
+
     const updateProfile = async (id: number, data: any) => {
         setIsLoading(true);
         try {
-            const response = await api.post('/master/profile', {
-                action: 'UPDATE',
-                id,
-                data
-            });
+            const response = await api.post('/master/profile', { action: 'UPDATE', id, data });
             if (response.data.success) {
                 toast.success("Profil berhasil diperbarui!");
                 return response.data.data;
@@ -43,5 +44,5 @@ export const useProfile = () => {
         }
     };
 
-    return { getProfileById, updateProfile, isLoading };
+    return { getProfileById, updateProfile, fetchProdis, prodis, isLoading };
 };

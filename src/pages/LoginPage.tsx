@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ const LoginPage = () => {
     try {
       await login(identifier, password);
       toast.success('Berhasil login!');
-      navigate('/');
+      
     } catch (error: any) {
       toast.error(error.message);
     } finally {

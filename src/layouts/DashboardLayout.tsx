@@ -4,42 +4,54 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/dashboard/Sidebar';
 import Header from '../components/dashboard/Header';
 
-// 1. Definisikan interface props agar tidak error 'IntrinsicAttributes'
 interface DashboardLayoutProps {
   variant: 'admin' | 'user';
 }
 
-// 2. Terapkan interface pada komponen
 export default function DashboardLayout({ variant }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
 
-  // 3. Logika Navigasi yang dinamis berdasarkan Variant/Role
+  // Logika Navigasi yang disesuaikan dengan kategori
   let navItems: any[] = [];
 
   if (variant === 'admin') {
-    // Menu Khusus Admin
     navItems = [
       { title: 'Dashboard', icon: 'layout-dashboard', href: '/admin' },
-      { title: 'Verifikasi User', icon: 'user-check', href: '/admin/verification' },
+      
+      // Pengguna & Verifikasi
+      { type: 'label', title: 'Pengguna & Verifikasi' },
       { title: 'Data Alumni', icon: 'users', href: '/admin/alumni' },
+      { title: 'Verifikasi Pengguna', icon: 'user-check', href: '/admin/verification' },
+      
+      // Master Data
+      { type: 'label', title: 'Master Data' },
+      { title: 'Fakultas & Prodi', icon: 'graduation-cap', href: '/admin/fakultas-prodi' }, // Anda bisa memfilter view di page ini
+      { title: 'Sektor Pekerjaan', icon: 'briefcase', href: '/admin/sektor-pekerjaan' },
+      
+      // Berita & Event
+      { type: 'label', title: 'Berita & Event' },
+      { title: 'Kelola Berita', icon: 'newspaper', href: '/admin/manage-news' },
+      { title: 'Kelola Event', icon: 'calendar', href: '/admin/manage-events' },
+      
+      // Forum
+      { type: 'label', title: 'Komunitas' },
+      { title: 'Forum Diskusi', icon: 'messages-square', href: '/forum' },
+      
+      { type: 'divider' },
       { title: 'Pengaturan', icon: 'settings', href: '/admin/settings' },
     ];
   } else {
-    // Menu Khusus User / Alumni
     navItems = [
       { title: 'Profil Saya', icon: 'user', href: '/profile' },
-      { title: 'Info Karir', icon: 'briefcase', href: '/career-info' },
+      { title: 'Forum Diskusi', icon: 'messages-square', href: '/forum' }, // Menu baru untuk fitur X/Twitter
       { title: 'Berita', icon: 'newspaper', href: '/news' },
-      { title: 'Pengaturan', icon: 'settings', href: '/settings' },
+      { title: 'Event', icon: 'calendar', href: '/events' },
     ];
   }
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50 font-sans text-slate-900">
-      {/* Pastikan komponen Sidebar Anda juga menerima props navItems.
-          Variant dikirimkan jika Sidebar butuh styling berbeda antara Admin & User.
-      */}
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
@@ -54,7 +66,6 @@ export default function DashboardLayout({ variant }: DashboardLayoutProps) {
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-10">
           <div className="max-w-7xl mx-auto">
-            {/* Outlet akan merender halaman sesuai rute (ProfilePage, DashboardPage, dll) */}
             <Outlet />
           </div>
         </main>

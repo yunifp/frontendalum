@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { toast } from 'sonner';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ nim: '', username: '', email: '', password: '', hp: '' });
+  const [formData, setFormData] = useState({ nim: '', username: '', nama_lengkap: '', email: '', password: '', hp: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,11 +23,32 @@ const RegisterPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // 1. Registrasi Akun ke RBAC Service
       const response = await api.post('/auth/register', formData);
+      const data = response.data;
+
+      if (!data.success) {
+        toast.error(data.message || 'Registrasi gagal');
+        return;
+      }
+
+      // Pastikan nama key id sesuai dengan response backend Anda (userId atau id)
+      const userId = data.user.id;
+
+      // 2. Membuat Profil ke Master Service
+      // PENTING: Tambahkan Header x-internal-key di sini
+      await api.post('/master/create-profile', {
+        id_pengguna: userId,
+        nama_lengkap: formData.nama_lengkap
+      });
+
       toast.success(response.data.message || 'Registrasi berhasil! Silakan login.');
       navigate('/login');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Terjadi kesalahan saat registrasi');
+      // Cek apakah error berasal dari request pertama atau kedua
+      const errorMessage = error.response?.data?.message || 'Terjadi kesalahan saat registrasi';
+      toast.error(errorMessage);
+      console.error("Register Flow Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +63,10 @@ const RegisterPage = () => {
         <Card className="border-slate-100 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden">
           <CardHeader className="space-y-2 pb-6 pt-10 px-8">
             <div className="mx-auto flex justify-center mb-2">
-              <img 
-                src="/src/assets/logo.jpg" 
-                alt="Logo ITB" 
-                className="h-16 w-auto object-contain mix-blend-multiply" 
+              <img
+                src="/src/assets/logo.jpg"
+                alt="Logo ITB"
+                className="h-16 w-auto object-contain mix-blend-multiply"
               />
             </div>
             <CardTitle className="text-2xl font-black text-center text-indigo-950 tracking-tight">
@@ -71,6 +93,13 @@ const RegisterPage = () => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="nama_lengkap" className="text-slate-700 font-bold text-sm ml-1">Nama Lengkap</Label>
+                <div className="relative group">
+                  <User className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-indigo-800 transition-colors" />
+                  <Input id="nama_lengkap" placeholder="Nama Lengkap" className="pl-10 h-12 bg-slate-50 border-slate-200 focus-visible:ring-indigo-900/20 focus-visible:border-indigo-900 rounded-xl" onChange={handleChange} required />
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-slate-700 font-bold text-sm ml-1">Email Utama</Label>
                 <div className="relative group">
@@ -101,7 +130,7 @@ const RegisterPage = () => {
               <Button disabled={isLoading} className="w-full h-12 bg-indigo-900 hover:bg-indigo-800 text-white font-bold rounded-xl mt-4 transition-colors" type="submit">
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Buat Akun Sekarang"}
               </Button>
-              
+
               <p className="text-center text-sm mt-6 text-slate-600 font-medium">
                 Sudah punya akun? <button type="button" onClick={() => navigate('/login')} className="text-orange-600 font-bold hover:text-orange-700 hover:underline">Masuk di sini</button>
               </p>

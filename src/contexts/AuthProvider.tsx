@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/axios';
@@ -39,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initAuth = async () => {
       const token = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
-      
+
       if (!token || !refreshToken) {
         clearAuthData();
         setIsLoading(false);
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const handleLogoutEvent = () => {
       clearAuthData();
-      
+
       if (window.location.pathname !== '/login') {
         toast.error('Sesi Anda telah berakhir, silakan login kembali');
         navigate('/login', { replace: true });
@@ -83,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await api.post('/auth/logout');
     } catch {
+      // Logout tetap dilakukan meskipun request gagal
     } finally {
       clearAuthData();
       navigate('/login', { replace: true });

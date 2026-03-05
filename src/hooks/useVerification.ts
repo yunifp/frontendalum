@@ -21,7 +21,7 @@ export const useVerification = () => {
     const fetchUsers = useCallback(async () => {
         try {
             setIsLoading(true);
-            const { data } = await api.post('/users', {
+            const { data } = await api.post('/rbac/users', {
                 action: 'GET_ALL',
                 role: 'USER',
                 page: 1,
@@ -42,7 +42,7 @@ export const useVerification = () => {
     const handleUpdateStatus = async (id: number, newStatus: 'ACTIVE' | 'REJECTED') => {
         try {
             setProcessingId(id);
-            await api.post('/users', {
+            await api.post('/rbac/users', {
                 action: 'UPDATE_STATUS',
                 id: id,
                 data: { status: newStatus }

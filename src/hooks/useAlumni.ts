@@ -13,16 +13,30 @@ export interface UserData {
     createdAt: string;
 }
 
-export interface AlumniDetail extends UserData {
-    profile?: {
-        fullName: string;
-        address: string;
-        birthDate: string;
-        graduationYear: string;
-        fakultas: string;
-        prodi: string;
-        avatar?: string;
+export interface AlumniProfile {
+    fullName?: string;
+    avatar?: string;
+    birthPlace?: string;
+    birthDate?: string;
+    address?: string;
+    angkatan?: number;
+    graduationYear?: number;
+    wisudaDate?: string;
+    agama?: string;
+    jenjang?: string;
+    gender?: string;
+    thesisTitle?: string;
+    degree?: string;
+    fakultas?: string;
+    prodi?: string;
+    sosialMedia?: {
+        linkedin?: string;
+        instagram?: string;
     };
+}
+
+export interface AlumniDetail extends UserData {
+    profile?: AlumniProfile;
     pekerjaan?: {
         company: string;
         position: string;
@@ -40,7 +54,8 @@ export const useAlumni = () => {
     const fetchAlumni = useCallback(async (searchQuery = '') => {
         try {
             setIsLoading(true);
-            const { data } = await api.post('/users', {
+
+            const { data } = await api.post('/rbac/users', {
                 action: 'GET_ALL',
                 role: 'USER',
                 page: 1,
@@ -50,9 +65,7 @@ export const useAlumni = () => {
 
             setAlumni(data.data);
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Gagal memuat data alumni', {
-                id: 'fetch-alumni-error'
-            });
+            toast.error(error.response?.data?.message || 'Gagal memuat data alumni');
         } finally {
             setIsLoading(false);
         }
@@ -62,24 +75,80 @@ export const useAlumni = () => {
         try {
             setIsDetailLoading(true);
 
-            const { data } = await api.post('/users/get-by-id', {
-                id: userId
-            });
+            const userRes = await api.post('/rbac/users/get-by-id', { id: userId });
+            const userData = userRes.data.data;
 
-            setDetailData(data.data);
+            try {
+                const profileRes = await api.post('/master/profile', {
+                    action: 'GET_BY_ID',
+                    id: userId
+                });
+
+                if (profileRes.data.success) {
+                    const p = profileRes.data.data;
+
+                    // Mapping sesuai response API yang baru
+                    userData.profile = {
+                        fullName: p.nama_lengkap,
+                        avatar: p.foto,
+                        birthPlace: p.tempat_lahir,
+                        birthDate: p.tanggal_lahir ? new Date(p.tanggal_lahir).toLocaleDateString('id-ID') : 'Belum diisi',
+                        angkatan: p.angkatan,
+                        graduationYear: p.tahun_lulus,
+                        wisudaDate: p.tanggal_wisuda,
+                        agama: p.agama,
+                        jenjang: p.jenjang,
+                        gender: p.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan',
+                        thesisTitle: p.judul_skripsi,
+                        degree: p.gelar,
+                        // Sesuai struktur: p.prodi.fakultas.nama
+                        fakultas: p.prodi?.fakultas?.nama,
+                        prodi: p.prodi?.nama,
+                        sosialMedia: {
+                            linkedin: p.sosial_media?.linkedin,
+                            instagram: p.sosial_media?.instagram
+                        }
+                    };
+                }
+
+            } catch (err) {
+                console.error('Gagal mengambil profile', err);
+            }
+
+            setDetailData(userData);
+
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Gagal memuat detail alumni', {
-                id: 'fetch-detail-error'
-            });
+            toast.error(error.response?.data?.message || 'Gagal memuat detail alumni');
         } finally {
             setIsDetailLoading(false);
         }
     }, []);
 
+    const handleUpdateUser = async (id: number, updateData: Partial<UserData>) => {
+        try {
+            setProcessingId(id);
+
+            await api.post('/rbac/users', {
+                action: 'UPDATE',
+                id: id,
+                data: updateData
+            });
+
+            toast.success('Data user berhasil diperbarui');
+
+            fetchAlumniDetail(id);
+
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal update user');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     const handleUpdateStatus = async (id: number, newStatus: 'ACTIVE' | 'REJECTED' | 'DEACTIVATED') => {
         try {
             setProcessingId(id);
-            await api.post('/users', {
+            await api.post('/rbac/users', {
                 action: 'UPDATE_STATUS',
                 id: id,
                 data: { status: newStatus }
@@ -98,40 +167,15 @@ export const useAlumni = () => {
         }
     };
 
-    const handleUpdateUser = async (id: number, updateData: Partial<UserData>) => {
-        try {
-            setProcessingId(id);
-            // Menggunakan pattern action endpoint seperti yang sudah ada
-            await api.post('/users', {
-                action: 'UPDATE',
-                id: id,
-                data: updateData
-            });
-
-            toast.success('Data otentikasi & kontak pengguna berhasil diperbarui', {
-                id: 'update-user-toast'
-            });
-            // Refresh detail data setelah update
-            fetchAlumniDetail(id);
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Gagal memperbarui data pengguna', {
-                id: 'update-user-toast'
-            });
-        } finally {
-            setProcessingId(null);
-        }
-    };
-
     return {
         alumni,
         isLoading,
         isDetailLoading,
         detailData,
         processingId,
-        setDetailData,
         fetchAlumni,
         fetchAlumniDetail,
-        handleUpdateStatus,
-        handleUpdateUser
+        handleUpdateUser,
+        handleUpdateStatus
     };
 };

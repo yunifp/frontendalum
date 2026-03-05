@@ -1,4 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Link } from 'react-router-dom';
 import { Menu, LogOut, Settings, User as UserIcon, BellIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -9,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetTrigger, 
-  SheetTitle, 
-  SheetDescription 
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription
 } from '../ui/sheet';
 import { useAuth } from '../../hooks/useAuth';
 import * as LucideIcons from 'lucide-react';
@@ -35,15 +36,14 @@ const DynamicIcon = ({ name, className }: { name: string; className?: string }) 
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
-  
+
   const IconComponent = (LucideIcons as any)[formattedName] || LucideIcons.Circle;
   return <IconComponent className={className} />;
 };
 
 export default function Header({ pathname, navItems }: HeaderProps) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const unreadCount = 3; 
+  const unreadCount = 3;
 
   const handleLogout = async () => {
     await logout();
@@ -51,7 +51,8 @@ export default function Header({ pathname, navItems }: HeaderProps) {
 
   const displayName = user?.username || user?.email?.split('@')[0] || 'Pengguna';
   const displayEmail = user?.email || 'Email tidak tersedia';
-  const displayRole = user?.role || 'Alumni';
+  // jika rolenya USER maka tampilkan "Alumni", jika ADMIN tampilkan "Administrator"
+  const displayRole = user?.role === 'ADMIN' ? 'ADMIN' : 'ALUMNI';
 
   const getInitials = (name: string) => {
     return name
@@ -79,10 +80,10 @@ export default function Header({ pathname, navItems }: HeaderProps) {
             </SheetDescription>
 
             <div className="flex items-center gap-3 mb-10 mt-2">
-              <img 
-                src="/src/assets/logo.jpg" 
-                alt="Logo ITB" 
-                className="h-10 w-auto object-contain mix-blend-multiply" 
+              <img
+                src="/src/assets/logo.jpg"
+                alt="Logo ITB"
+                className="h-10 w-auto object-contain mix-blend-multiply"
               />
               <div className="flex flex-col">
                 <span className="text-xl font-extrabold tracking-tight text-indigo-950 leading-none">ALUMNI</span>
@@ -98,11 +99,10 @@ export default function Header({ pathname, navItems }: HeaderProps) {
                   <Link
                     key={index}
                     to={item.href}
-                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${
-                      isActive
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${isActive
                         ? 'bg-indigo-900 text-white shadow-md shadow-indigo-900/20'
                         : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-900'
-                    }`}
+                      }`}
                   >
                     <DynamicIcon name={item.icon} className="w-5 h-5" />
                     <span>{item.title}</span>
