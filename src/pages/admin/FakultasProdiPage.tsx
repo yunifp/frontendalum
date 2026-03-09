@@ -1,48 +1,60 @@
+// src/pages/admin/FakultasProdiPage.tsx
 import { useState, useMemo } from 'react';
 import { useFakultasProdi, Fakultas, Prodi } from '@/hooks/useFakultasProdi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Loader2, Search, Edit, ArrowUpDown, Save } from 'lucide-react';
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription 
+} from '@/components/ui/dialog';
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Plus, Trash2, Loader2, Search, Edit2, 
+  MoreHorizontal, School, BookOpen, Save, 
+} from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth'; // <-- Import useAuth
 
 export default function FakultasProdiPage() {
+    const { user } = useAuth(); // <-- Ambil user dari context
+    
+    // Cek apakah user adalah Super Admin (yang berhak kelola Fakultas)
+    const isSuperAdmin = user?.role === 'ADMIN';
+
     const {
         fakultasList, prodiList, isLoading, isProcessing,
         handleCreateFakultas, handleUpdateFakultas, handleDeleteFakultas,
         handleCreateProdi, handleUpdateProdi, handleDeleteProdi
     } = useFakultasProdi();
 
-    // State Modal
     const [isFakultasModalOpen, setIsFakultasModalOpen] = useState(false);
     const [isProdiModalOpen, setIsProdiModalOpen] = useState(false);
-
-    // State Form & Edit
     const [editingFakultas, setEditingFakultas] = useState<Fakultas | null>(null);
     const [editingProdi, setEditingProdi] = useState<Prodi | null>(null);
     const [namaInput, setNamaInput] = useState('');
     const [selectedFakultasId, setSelectedFakultasId] = useState('');
-
-    // State Search & Sort
     const [searchFakultas, setSearchFakultas] = useState('');
     const [searchProdi, setSearchProdi] = useState('');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-    // --- LOGIKA FILTER & SORT ---
+    // --- LOGIKA FILTER ---
     const filteredFakultas = useMemo(() => {
-        return [...fakultasList]
-            .filter(f => f.nama.toLowerCase().includes(searchFakultas.toLowerCase()))
-            .sort((a, b) => sortOrder === 'asc' ? a.nama.localeCompare(b.nama) : b.nama.localeCompare(a.nama));
-    }, [fakultasList, searchFakultas, sortOrder]);
+        return fakultasList.filter(f => f.nama.toLowerCase().includes(searchFakultas.toLowerCase()));
+    }, [fakultasList, searchFakultas]);
 
     const filteredProdi = useMemo(() => {
-        return [...prodiList]
-            .filter(p => p.nama.toLowerCase().includes(searchProdi.toLowerCase()) || p.fakultas?.nama.toLowerCase().includes(searchProdi.toLowerCase()))
-            .sort((a, b) => sortOrder === 'asc' ? a.nama.localeCompare(b.nama) : b.nama.localeCompare(a.nama));
-    }, [prodiList, searchProdi, sortOrder]);
+        return prodiList.filter(p => 
+            p.nama.toLowerCase().includes(searchProdi.toLowerCase()) || 
+            p.fakultas?.nama.toLowerCase().includes(searchProdi.toLowerCase())
+        );
+    }, [prodiList, searchProdi]);
 
     // --- HANDLERS ---
     const openAddFakultas = () => {
@@ -76,7 +88,6 @@ export default function FakultasProdiPage() {
         const success = editingFakultas
             ? await handleUpdateFakultas(editingFakultas.id_fakultas, namaInput)
             : await handleCreateFakultas(namaInput);
-
         if (success) setIsFakultasModalOpen(false);
     };
 
@@ -86,109 +97,134 @@ export default function FakultasProdiPage() {
         const success = editingProdi
             ? await handleUpdateProdi(editingProdi.id_prodi, namaInput, Number(selectedFakultasId))
             : await handleCreateProdi(namaInput, Number(selectedFakultasId));
-
         if (success) setIsProdiModalOpen(false);
     };
 
-    const toggleSort = () => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-
     return (
-        <div className="space-y-6 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-black text-indigo-950 uppercase tracking-tight">Manajemen Fakultas & Prodi</h1>
-                <Button variant="outline" size="sm" onClick={toggleSort} className="rounded-xl border-slate-200">
-                    <ArrowUpDown className="w-4 h-4 mr-2" /> Urutan: {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
-                </Button>
+        <div className="space-y-6">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Struktur Akademik</h1>
+                    <p className="text-sm text-slate-500">Manajemen data master Fakultas dan Program Studi kampus.</p>
+                </div>
             </div>
 
-            <Tabs defaultValue="fakultas" className="w-full bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                <TabsList className="mb-6 bg-slate-100 p-1 rounded-2xl">
-                    <TabsTrigger value="fakultas" className="rounded-xl px-8 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">Fakultas</TabsTrigger>
-                    <TabsTrigger value="prodi" className="rounded-xl px-8 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">Program Studi</TabsTrigger>
-                </TabsList>
-
-                {/* TAB FAKULTAS */}
-                <TabsContent value="fakultas" className="space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                        <div className="relative w-full max-w-sm">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                            <Input placeholder="Cari fakultas..." className="pl-10 rounded-xl bg-slate-50 border-none" value={searchFakultas} onChange={(e) => setSearchFakultas(e.target.value)} />
-                        </div>
-                        <Button onClick={openAddFakultas} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold">
-                            <Plus className="w-4 h-4 mr-2" /> Tambah Fakultas
-                        </Button>
+            <Tabs defaultValue={isSuperAdmin ? "fakultas" : "prodi"} className="w-full space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+                    <TabsList className="bg-slate-100/50 border-none p-1">
+                        {/* Tab Fakultas Hanya Muncul jika Super Admin */}
+                        {isSuperAdmin && (
+                            <TabsTrigger value="fakultas" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                                <School className="w-4 h-4 mr-2" /> Fakultas
+                            </TabsTrigger>
+                        )}
+                        <TabsTrigger value="prodi" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <BookOpen className="w-4 h-4 mr-2" /> Program Studi
+                        </TabsTrigger>
+                    </TabsList>
+                    
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        {/* Tombol Tambah Fakultas Hanya Muncul jika Super Admin */}
+                        {isSuperAdmin && (
+                            <TabsContent value="fakultas" className="mt-0 w-full">
+                                <Button onClick={openAddFakultas} className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto rounded-xl shadow-sm">
+                                    <Plus className="w-4 h-4 mr-2" /> Tambah Fakultas
+                                </Button>
+                            </TabsContent>
+                        )}
+                        <TabsContent value="prodi" className="mt-0 w-full">
+                            <Button onClick={openAddProdi} className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto rounded-xl shadow-sm">
+                                <Plus className="w-4 h-4 mr-2" /> Tambah Prodi
+                            </Button>
+                        </TabsContent>
                     </div>
+                </div>
 
-                    <div className="border rounded-2xl overflow-hidden border-slate-100">
-                        <Table>
-                            <TableHeader className="bg-slate-50/50">
-                                <TableRow>
-                                    <TableHead className="w-12">No</TableHead>
-                                    <TableHead>Nama Fakultas</TableHead>
-                                    <TableHead>Jumlah Prodi</TableHead>
-                                    <TableHead className="text-right">Aksi</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center py-20"><Loader2 className="animate-spin inline mr-2 text-indigo-500" /> Memuat...</TableCell></TableRow>
-                                ) : filteredFakultas.length === 0 ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400">Data tidak ditemukan</TableCell></TableRow>
-                                ) : filteredFakultas.map((item, index) => (
-                                    <TableRow key={item.id_fakultas} className="hover:bg-slate-50/50 transition-colors">
-                                        <TableCell className="text-slate-400 font-medium">{index + 1}</TableCell>
-                                        <TableCell className="font-bold text-slate-700">{item.nama}</TableCell>
-                                        <TableCell className='font-medium text-slate-700'>{item._count?.prodis} Prodi</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="text-indigo-500 hover:bg-indigo-50 rounded-lg" onClick={() => openEditFakultas(item)}><Edit className="w-4 h-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50 rounded-lg" onClick={() => handleDeleteFakultas(item.id_fakultas)} disabled={isProcessing}><Trash2 className="w-4 h-4" /></Button>
-                                            </div>
-                                        </TableCell>
+                {/* --- TAB FAKULTAS (Hanya di-render jika Super Admin) --- */}
+                {isSuperAdmin && (
+                    <TabsContent value="fakultas" className="space-y-4">
+                        <div className="flex items-center px-3 border rounded-xl bg-white shadow-sm max-w-md focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                            <Search className="w-4 h-4 text-gray-400" />
+                            <Input 
+                                placeholder="Cari fakultas..." 
+                                className="border-0 focus-visible:ring-0 text-sm h-10" 
+                                value={searchFakultas} 
+                                onChange={(e) => setSearchFakultas(e.target.value)} 
+                            />
+                        </div>
+
+                        <div className="border rounded-xl bg-white overflow-hidden shadow-sm border-slate-200">
+                            <Table>
+                                <TableHeader className="bg-slate-50/80 backdrop-blur-sm">
+                                    <TableRow className="hover:bg-transparent border-b border-slate-200">
+                                        <TableHead className="h-12 px-4 text-center font-bold text-[11px] uppercase text-slate-600 w-16">No</TableHead>
+                                        <TableHead className="h-12 px-4 text-left font-bold text-[11px] uppercase text-slate-600">Nama Fakultas</TableHead>
+                                        <TableHead className="h-12 px-4 text-left font-bold text-[11px] uppercase text-slate-600">Statistik</TableHead>
+                                        <TableHead className="h-12 px-4 text-right font-bold text-[11px] uppercase text-slate-600">Aksi</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </TabsContent>
-
-                {/* TAB PRODI */}
-                <TabsContent value="prodi" className="space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                        <div className="relative w-full max-w-sm">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                            <Input placeholder="Cari prodi atau fakultas..." className="pl-10 rounded-xl bg-slate-50 border-none" value={searchProdi} onChange={(e) => setSearchProdi(e.target.value)} />
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? (
+                                        <TableRow><TableCell colSpan={4} className="text-center py-20"><Loader2 className="animate-spin inline mr-2 text-indigo-500" /> Memuat data...</TableCell></TableRow>
+                                    ) : filteredFakultas.length === 0 ? (
+                                        <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400 text-sm">Data fakultas tidak ditemukan</TableCell></TableRow>
+                                    ) : filteredFakultas.map((item, index) => (
+                                        <TableRow key={item.id_fakultas} className="group hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                                            <TableCell className="px-4 py-3 text-center text-xs font-mono text-slate-500">{index + 1}</TableCell>
+                                            <TableCell className="px-4 py-3 font-bold text-xs uppercase text-slate-900">{item.nama}</TableCell>
+                                            <TableCell className="px-4 py-3">
+                                                <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold">
+                                                    {item._count?.prodis || 0} PRODI
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="px-4 py-3 text-right">
+                                                <DropdownAction onEdit={() => openEditFakultas(item)} onDelete={() => handleDeleteFakultas(item.id_fakultas)} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
-                        <Button onClick={openAddProdi} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold">
-                            <Plus className="w-4 h-4 mr-2" /> Tambah Prodi
-                        </Button>
+                    </TabsContent>
+                )}
+
+                {/* --- TAB PRODI --- */}
+                <TabsContent value="prodi" className="space-y-4">
+                    <div className="flex items-center px-3 border rounded-xl bg-white shadow-sm max-w-md focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                        <Search className="w-4 h-4 text-gray-400" />
+                        <Input 
+                            placeholder="Cari prodi atau fakultas..." 
+                            className="border-0 focus-visible:ring-0 text-sm h-10" 
+                            value={searchProdi} 
+                            onChange={(e) => setSearchProdi(e.target.value)} 
+                        />
                     </div>
 
-                    <div className="border rounded-2xl overflow-hidden border-slate-100">
+                    <div className="border rounded-xl bg-white overflow-hidden shadow-sm border-slate-200">
                         <Table>
-                            <TableHeader className="bg-slate-50/50">
-                                <TableRow>
-                                    <TableHead className="w-12">No</TableHead>
-                                    <TableHead>Fakultas</TableHead>
-                                    <TableHead>Program Studi</TableHead>
-                                    <TableHead className="text-right">Aksi</TableHead>
+                            <TableHeader className="bg-slate-50/80 backdrop-blur-sm">
+                                <TableRow className="hover:bg-transparent border-b border-slate-200">
+                                    <TableHead className="h-12 px-4 text-center font-bold text-[11px] uppercase text-slate-600 w-16">No</TableHead>
+                                    <TableHead className="h-12 px-4 text-left font-bold text-[11px] uppercase text-slate-600">Program Studi</TableHead>
+                                    <TableHead className="h-12 px-4 text-left font-bold text-[11px] uppercase text-slate-600">Fakultas</TableHead>
+                                    <TableHead className="h-12 px-4 text-right font-bold text-[11px] uppercase text-slate-600">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center py-20"><Loader2 className="animate-spin inline mr-2 text-indigo-500" /> Memuat...</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={4} className="text-center py-20"><Loader2 className="animate-spin inline mr-2 text-indigo-500" /> Memuat data...</TableCell></TableRow>
                                 ) : filteredProdi.length === 0 ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400">Data tidak ditemukan</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400 text-sm">Data prodi tidak ditemukan</TableCell></TableRow>
                                 ) : filteredProdi.map((item, index) => (
-                                    <TableRow key={item.id_prodi} className="hover:bg-slate-50/50 transition-colors">
-                                        <TableCell className="text-slate-400 font-medium">{index + 1}</TableCell>
-                                        <TableCell className="text-slate-500 font-medium text-xs uppercase tracking-wider">{item.fakultas?.nama}</TableCell>
-                                        <TableCell className="font-bold text-slate-700">{item.nama}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="text-indigo-500 hover:bg-indigo-50 rounded-lg" onClick={() => openEditProdi(item)}><Edit className="w-4 h-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50 rounded-lg" onClick={() => handleDeleteProdi(item.id_prodi)} disabled={isProcessing}><Trash2 className="w-4 h-4" /></Button>
-                                            </div>
+                                    <TableRow key={item.id_prodi} className="group hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                                        <TableCell className="px-4 py-3 text-center text-xs font-mono text-slate-500">{index + 1}</TableCell>
+                                        <TableCell className="px-4 py-3 font-bold text-xs uppercase text-slate-900">{item.nama}</TableCell>
+                                        <TableCell className="px-4 py-3">
+                                            <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.fakultas?.nama}</span>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-right">
+                                            <DropdownAction onEdit={() => openEditProdi(item)} onDelete={() => handleDeleteProdi(item.id_prodi)} />
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -198,46 +234,115 @@ export default function FakultasProdiPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* SHARED DIALOG FOR FAKULTAS */}
-            <Dialog open={isFakultasModalOpen} onOpenChange={setIsFakultasModalOpen}>
-                <DialogContent className="rounded-[2rem] border-none shadow-2xl">
-                    <DialogHeader><DialogTitle className="font-black text-indigo-950 uppercase">{editingFakultas ? 'Edit' : 'Tambah'} Fakultas</DialogTitle></DialogHeader>
-                    <form onSubmit={submitFakultas} className="space-y-6 mt-4">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nama Fakultas</Label>
-                            <Input value={namaInput} onChange={(e) => setNamaInput(e.target.value)} required className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
-                        </div>
-                        <Button type="submit" disabled={isProcessing} className="w-full h-12 rounded-2xl bg-indigo-600 font-bold uppercase tracking-widest shadow-lg shadow-indigo-100">
-                            {isProcessing ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {editingFakultas ? 'Simpan Perubahan' : 'Tambah Sekarang'}
-                        </Button>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            {/* MODALS */}
+            {isSuperAdmin && (
+                <FakultasDialog 
+                    isOpen={isFakultasModalOpen} 
+                    setIsOpen={setIsFakultasModalOpen} 
+                    editing={editingFakultas} 
+                    namaInput={namaInput} 
+                    setNamaInput={setNamaInput} 
+                    onSubmit={submitFakultas} 
+                    isProcessing={isProcessing} 
+                />
+            )}
 
-            {/* SHARED DIALOG FOR PRODI */}
-            <Dialog open={isProdiModalOpen} onOpenChange={setIsProdiModalOpen}>
-                <DialogContent className="rounded-[2rem] border-none shadow-2xl">
-                    <DialogHeader><DialogTitle className="font-black text-indigo-950 uppercase">{editingProdi ? 'Edit' : 'Tambah'} Program Studi</DialogTitle></DialogHeader>
-                    <form onSubmit={submitProdi} className="space-y-6 mt-4">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Induk Fakultas</Label>
-                            <Select value={selectedFakultasId} onValueChange={setSelectedFakultasId}>
-                                <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue placeholder="Pilih Fakultas" /></SelectTrigger>
-                                <SelectContent className="rounded-2xl shadow-xl border-slate-100">
-                                    {fakultasList.map((f) => (<SelectItem key={f.id_fakultas} value={f.id_fakultas.toString()} className="rounded-xl my-1">{f.nama}</SelectItem>))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nama Program Studi</Label>
-                            <Input value={namaInput} onChange={(e) => setNamaInput(e.target.value)} required className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
-                        </div>
-                        <Button type="submit" disabled={isProcessing || !selectedFakultasId} className="w-full h-12 rounded-2xl bg-indigo-600 font-bold uppercase tracking-widest shadow-lg shadow-indigo-100">
-                            {isProcessing ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {editingProdi ? 'Simpan Perubahan' : 'Tambah Sekarang'}
-                        </Button>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <ProdiDialog 
+                isOpen={isProdiModalOpen} 
+                setIsOpen={setIsProdiModalOpen} 
+                editing={editingProdi} 
+                namaInput={namaInput} 
+                setNamaInput={setNamaInput} 
+                fakultasList={fakultasList}
+                selectedFakultasId={selectedFakultasId}
+                setSelectedFakultasId={setSelectedFakultasId}
+                onSubmit={submitProdi} 
+                isProcessing={isProcessing} 
+            />
         </div>
+    );
+}
+
+// Helper Components
+function DropdownAction({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => void }) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
+                    <Edit2 className="w-4 h-4 mr-2 text-indigo-600" /> Edit Data
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-red-600 focus:text-red-700">
+                    <Trash2 className="w-4 h-4 mr-2" /> Hapus Permanen
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function FakultasDialog({ isOpen, setIsOpen, editing, namaInput, setNamaInput, onSubmit, isProcessing }: any) {
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-slate-900">{editing ? 'Ubah' : 'Tambah'} Fakultas</DialogTitle>
+                    <DialogDescription>Masukkan nama fakultas secara lengkap dan benar.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={onSubmit} className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold uppercase text-slate-500">Nama Fakultas</Label>
+                        <Input value={namaInput} onChange={(e) => setNamaInput(e.target.value)} required className="rounded-xl border-slate-200" placeholder="Contoh: Fakultas Teknik" />
+                    </div>
+                    <DialogFooter className="pt-4 gap-2">
+                        <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setIsOpen(false)}>Batal</Button>
+                        <Button type="submit" disabled={isProcessing} className="flex-1 rounded-xl bg-indigo-600">
+                            {isProcessing ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />} Simpan
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function ProdiDialog({ isOpen, setIsOpen, editing, namaInput, setNamaInput, fakultasList, selectedFakultasId, setSelectedFakultasId, onSubmit, isProcessing }: any) {
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-slate-900">{editing ? 'Ubah' : 'Tambah'} Prodi</DialogTitle>
+                    <DialogDescription>Pilih fakultas induk dan masukkan nama program studi.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={onSubmit} className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold uppercase text-slate-500">Induk Fakultas</Label>
+                        <Select value={selectedFakultasId} onValueChange={setSelectedFakultasId}>
+                            <SelectTrigger className="rounded-xl border-slate-200">
+                                <SelectValue placeholder="Pilih Fakultas" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                {fakultasList.map((f: any) => (
+                                    <SelectItem key={f.id_fakultas} value={f.id_fakultas.toString()}>{f.nama}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold uppercase text-slate-500">Nama Program Studi</Label>
+                        <Input value={namaInput} onChange={(e) => setNamaInput(e.target.value)} required className="rounded-xl border-slate-200" placeholder="Contoh: Informatika" />
+                    </div>
+                    <DialogFooter className="pt-4 gap-2">
+                        <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setIsOpen(false)}>Batal</Button>
+                        <Button type="submit" disabled={isProcessing || !selectedFakultasId} className="flex-1 rounded-xl bg-indigo-600">
+                            {isProcessing ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />} Simpan
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

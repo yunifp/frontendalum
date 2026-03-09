@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import logo from '../assets/logo.png';
+
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ const LoginPage = () => {
     try {
       await login(identifier, password);
       toast.success('Berhasil login!');
-      
+
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -36,14 +38,14 @@ const LoginPage = () => {
       <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-900/5 blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-orange-500/5 blur-[120px]" />
 
-      <div className="relative w-full max-w-[420px]">
+      <div className="relative w-full max-w-105">
         <Card className="border-slate-100 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden">
           <CardHeader className="space-y-2 pb-6 pt-10 px-8">
             <div className="mx-auto flex justify-center mb-4">
-              <img 
-                src="/src/assets/logo.jpg" 
-                alt="Logo ITB" 
-                className="h-20 w-auto object-contain mix-blend-multiply" 
+              <img
+                src={logo}
+                alt="Logo ITB"
+                className="h-20 w-auto object-contain mix-blend-multiply"
               />
             </div>
             <CardTitle className="text-2xl font-black text-center text-indigo-950 tracking-tight">
@@ -98,6 +100,17 @@ const LoginPage = () => {
                   Daftar di sini
                 </button>
               </p>
+              <div className="flex justify-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-900 font-medium transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Kembali ke Home
+                </button>
+              </div>
+
             </CardContent>
           </form>
         </Card>

@@ -1,51 +1,124 @@
-import { Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import logoheader from '../../assets/logo.png';
 
-export default function Navbar() {
+const Navbar = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const menuItems = [
+    { label: 'Beranda', path: '/home' },
+    { label: 'Berita', path: '/berita' },
+    { label: 'Event', path: '/acara' }
+  ];
+
+  const dashboardPath = user?.role?.includes('ADMIN') ? '/admin' : '/profile';
+
   return (
-    <motion.header 
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="w-full bg-white relative z-50 shadow-sm"
+    <nav 
+      className={`fixed top-0 w-full z-50 transition-all duration-300 border-t-[6px] border-t-[#1e3a8a] font-sans ${
+        isScrolled ? 'bg-[#FAF9F6]/95 backdrop-blur-md shadow-sm border-b border-stone-300 py-3' : 'bg-[#FAF9F6] py-5 border-b border-stone-200'
+      }`}
     >
-      <div className="h-1.5 w-full bg-[#a51417]"></div>
-
-      <div className="border-b border-gray-100">
-        <div className="max-w-[1250px] mx-auto flex justify-end gap-6 py-2 px-6 lg:px-8 text-[11px] font-bold tracking-widest text-[#a51417] uppercase">
-          {["Events", "News & Awards", "Resources", "About", "Contact Us"].map((item, idx) => (
-            <a key={idx} href="#" className="hover:text-black transition-colors duration-300">
-              {item}
-            </a>
-          ))}
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-20  flex items-center justify-between">
+        <div className="flex items-center flex-shrink-0">
+          <Link to="/home" className="group">
+            <img
+              src={logoheader}
+              alt="Logo"
+              className="h-10 lg:h-20 w-auto object-contain mix-blend-multiply group-hover:opacity-80 transition-opacity"
+            />
+          </Link>
         </div>
+
+        <div className="hidden md:flex flex-1 items-center justify-end gap-10">
+          <div className="flex items-center gap-8">
+            {menuItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.path);
+              
+              return (
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  className={`relative group text-[11px] uppercase tracking-[0.2em] font-bold transition-colors py-1 ${
+                    isActive ? 'text-[#1e3a8a]' : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  {item.label}
+                  <span 
+                    className={`absolute bottom-0 left-0 h-[1px] bg-[#1e3a8a] transition-all duration-500 ease-out ${
+                      isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                  ></span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center pl-8 border-l border-stone-300">
+            <Link to={user ? dashboardPath : '/login'}>
+              <Button 
+                variant="outline" 
+                className="rounded-none border border-stone-900 text-stone-900 bg-transparent hover:bg-[#1e3a8a] hover:text-[#FAF9F6] hover:border-[#1e3a8a] font-bold text-[10px] uppercase tracking-[0.2em] h-10 px-6 transition-all duration-300 shadow-none"
+              >
+                {user ? 'Dashboard' : 'Masuk'}
+              </Button>
+            </Link>
+          </div>
+
+        </div>
+
+        <button
+          className="md:hidden text-stone-900 focus:outline-none ml-auto hover:text-[#1e3a8a] transition-colors"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <X size={28} strokeWidth={1.5} /> : <Menu size={28} strokeWidth={1.5} />}
+        </button>
+
       </div>
 
-      <div className="max-w-[1250px] mx-auto flex items-center justify-between py-5 px-6 lg:px-8">
-        <a href="#" className="flex items-center group">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Washington_University_in_St._Louis_Logo.png"
-            alt="WashU Logo"
-            className="h-10 object-contain transform group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="h-8 w-[1px] bg-gray-300 mx-5"></div>
-          <span className="text-[22px] font-light text-gray-800 tracking-wide group-hover:text-[#a51417] transition-colors duration-300">
-            Alumni and Friends
-          </span>
-        </a>
+      {isMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-[#FAF9F6] border-b border-stone-300 p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-2 duration-300">
+          
+          <div className="flex flex-col gap-4">
+            {menuItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.path);
 
-        <nav className="hidden lg:flex items-center gap-8 text-[15px] font-bold text-[#111111]">
-          {["Connect", "Volunteer Opportunities", "Reunite", "Learn & Travel", "Give"].map((item, idx) => (
-            <a key={idx} href="#" className="relative overflow-hidden group py-1">
-              <span className="group-hover:text-[#a51417] transition-colors duration-300">{item}</span>
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#a51417] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
-            </a>
-          ))}
-          <button className="text-black ml-2 hover:text-[#a51417] hover:scale-110 transition-all duration-300">
-            <Search size={20} strokeWidth={2.5} />
-          </button>
-        </nav>
-      </div>
-    </motion.header>
+              return (
+                <Link 
+                  key={item.label}
+                  to={item.path} 
+                  className={`font-bold uppercase tracking-[0.2em] text-xs py-2 border-b border-stone-200 ${
+                    isActive ? 'text-[#1e3a8a]' : 'text-stone-900 hover:text-[#1e3a8a]'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <Link to={user ? dashboardPath : '/login'} className="w-full mt-2" onClick={() => setIsMenuOpen(false)}>
+            <Button variant="outline" className="w-full rounded-none border-stone-900 text-stone-900 hover:bg-[#1e3a8a] hover:text-[#FAF9F6] hover:border-[#1e3a8a] font-bold h-12 uppercase tracking-[0.2em] text-[11px] transition-colors">
+              {user ? 'Go to Dashboard' : 'Masuk Akun'}
+            </Button>
+          </Link>
+        </div>
+      )}
+    </nav>
   );
-}
+};
+
+export default Navbar;  

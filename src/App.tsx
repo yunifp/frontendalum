@@ -11,17 +11,35 @@ import VerificationPage from './pages/admin/VerificationPage';
 import ProfilePage from './pages/users/ProfilePage';
 import { Toaster } from '@/components/ui/sonner';
 import AlumniManagementPage from './pages/admin/AlumniManagementPage';
-import AlumniDetailPage from './pages/admin/AdminDetailPage';
+import AlumniDetailPage from './pages/admin/AlumniDetailPage';
 import FakultasProdiPage from './pages/admin/FakultasProdiPage';
 import LandingPage from './pages/Home';
 import MainLayout from './layouts/MainLayout';
 import SektorPekerjaanPage from './pages/admin/SektorPekerjaanPage';
+import ForumPage from './pages/ForumPage';
+import NewsPage from './pages/users/NewsPage';
+import NewsDetailPage from './pages/users/NewsDetailPage';
+import NewsManagementPage from './pages/admin/NewsManagementPage';
+import NewsFormPage from './pages/admin/NewsFormPage'; 
+import EventManagementPage from './pages/admin/EventManagementPage';
+import EventFormPage from './pages/admin/EventFormPage';
+import AlumniDirectoryPage from './pages/users/AlumniDirectoryPage';
+import EventDetailPage from './pages/users/EventDetailPage';
+import EventsPage from './pages/users/EventsPage';
+import ForumProfilePage from './pages/ForumProfilePage';
+import Berita from './pages/Berita';
+import Acara from './pages/Acara';
+import BeritaDetailPage from './pages/BeritaDetailPage';
+import AcaraDetailPage from './pages/AcaraDetailPage';
+import LoggingManagementPage from './pages/admin/LoggingManagementPage';
+import NotificationPage from './pages/NotificationPage';
+import NotificationDetailPage from './pages/NotificationDetailPage';
+import UserManagementPage from './pages/admin/UserManagementPage';
 
-// Fungsi pengalihan berdasarkan Role setelah login
 function RoleBasedRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
-  return user?.role === 'ADMIN' ? <Navigate to="/admin" replace /> : <Navigate to="/profile" replace />;
+  return user?.role?.includes('ADMIN') ? <Navigate to="/admin" replace /> : <Navigate to="/profile" replace />;
 }
 
 function Root() {
@@ -37,17 +55,19 @@ const router = createBrowserRouter([
   {
     element: <Root />,
     children: [
-      // 1. PUBLIC LANDING AREA (Bisa diakses siapa saja)
+      { path: '/', element: <Navigate to="/home" replace /> },
       {
         path: '/',
         element: <MainLayout />,
         children: [
-          { index: true, element: <LandingPage /> }, // path: /
-          { path: 'home', element: <Navigate to="/" replace /> } // redirect /home ke / agar konsisten
+          { index: true, element: <Navigate to="/home" replace /> },
+          { path: 'home', element: <LandingPage /> },
+          { path: 'berita', element: <Berita /> },
+          { path: 'berita/:slug', element: <BeritaDetailPage /> },
+          { path: 'acara/:slug', element: <AcaraDetailPage /> },
+          { path: 'acara', element: <Acara /> },
         ]
       },
-
-      // 2. AUTH AREA (Hanya bisa diakses jika BELUM login)
       {
         element: <PublicRoute />,
         children: [
@@ -55,35 +75,37 @@ const router = createBrowserRouter([
           { path: '/register', element: <RegisterPage /> }
         ]
       },
-
-      // 3. PRIVATE REDIRECTOR (Jembatan setelah login)
+      
       {
         path: '/redirect',
-        element: <ProtectedRoute allowedRoles={['USER', 'ADMIN']} />,
-        children: [
-          { index: true, element: <RoleBasedRedirect /> }
-        ]
+        element: <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'ADMIN_FAKULTAS', 'ADMIN_PRODI']} />,
+        children: [{ index: true, element: <RoleBasedRedirect /> }]
       },
 
-      // 4. USER AREA (Hanya role USER & ADMIN)
       {
-        element: <ProtectedRoute allowedRoles={['USER', 'ADMIN']} />,
+        element: <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'ADMIN_FAKULTAS', 'ADMIN_PRODI']} />,
         children: [
           {
-            element: <DashboardLayout variant="user" />,
+            element: <DashboardLayout variant="user" />, 
             children: [
               { path: '/profile', element: <ProfilePage /> },
-              { path: '/career-info', element: <div className="p-8"><h1>Info Karir & Loker</h1></div> },
-              { path: '/news', element: <div className="p-8"><h1>Berita Kampus</h1></div> }
+              { path: '/forum', element: <ForumPage /> },
+              { path: '/forum/profile/:id', element: <ForumProfilePage /> },
+              { path: '/alumni-directory', element: <AlumniDirectoryPage /> },
+              { path: '/news', element: <NewsPage /> },
+              { path: '/news/:slug', element: <NewsDetailPage /> },
+              { path: '/events', element: <EventsPage /> },
+              { path: '/events/:slug', element: <EventDetailPage /> },
+              { path: 'notifications', element: <NotificationPage /> },
+              { path: 'notifications/:id', element: <NotificationDetailPage /> },
             ]
           }
         ]
       },
 
-      // 5. ADMIN AREA (Hanya role ADMIN)
       {
         path: '/admin',
-        element: <ProtectedRoute allowedRoles={['ADMIN']} />,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'ADMIN_FAKULTAS', 'ADMIN_PRODI']} />,
         children: [
           {
             element: <DashboardLayout variant="admin" />,
@@ -93,23 +115,38 @@ const router = createBrowserRouter([
               { path: 'alumni', element: <AlumniManagementPage /> },
               { path: 'alumni/:id', element: <AlumniDetailPage /> },
               { path: 'fakultas-prodi', element: <FakultasProdiPage /> },
-              { path: 'sektor-pekerjaan', element: <SektorPekerjaanPage /> },
+              { path: 'forum', element: <ForumPage /> },
+              { path: 'forum/profile/:id', element: <ForumProfilePage /> },
+              { path: 'notifications', element: <NotificationPage /> },
+              { path: 'notifications/:id', element: <NotificationDetailPage /> },
+              { path: 'news', element: <NewsManagementPage /> },
+              { path: 'news/create', element: <NewsFormPage /> },
+              { path: 'news/edit/:id', element: <NewsFormPage /> },
+              { path: 'events', element: <EventManagementPage /> },
+              { path: 'events/create', element: <EventFormPage /> },
+              { path: 'events/edit/:id', element: <EventFormPage /> },
+              { path: 'users', element: <UserManagementPage /> },
+
+              // STRICT ADMIN ONLY (Hanya Super Admin yang bisa akses Rute ini)
               {
-                path: 'settings',
-                element: <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                  <h1 className="text-2xl font-bold text-indigo-950">Pengaturan Admin</h1>
-                </div>
+                element: <ProtectedRoute allowedRoles={['ADMIN']} />,
+                children: [
+                  { path: 'sektor-pekerjaan', element: <SektorPekerjaanPage /> },
+                  { path: 'logging', element: <LoggingManagementPage /> },
+                  {
+                    path: 'settings',
+                    element: <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                      <h1 className="text-2xl font-bold text-indigo-950">Pengaturan Admin</h1>
+                    </div>
+                  }
+                ]
               }
             ]
           }
         ]
       },
-
-      // 6. 404 NOT FOUND - Lempar kembali ke Home
-      {
-        path: '*',
-        element: <Navigate to="/" replace />
-      }
+      
+      { path: '*', element: <Navigate to="/home" replace /> }
     ]
   }
 ]);

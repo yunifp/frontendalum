@@ -18,33 +18,36 @@ export default function DashboardLayout({ variant }: DashboardLayoutProps) {
   if (variant === 'admin') {
     navItems = [
       { title: 'Dashboard', icon: 'layout-dashboard', href: '/admin' },
-      
+
       // Pengguna & Verifikasi
-      { type: 'label', title: 'Pengguna & Verifikasi' },
-      { title: 'Data Alumni', icon: 'users', href: '/admin/alumni' },
+      { type: 'label', title: 'Pengguna' },
+      { title: 'Pengguna', icon: 'users', href: '/admin/users' },
       { title: 'Verifikasi Pengguna', icon: 'user-check', href: '/admin/verification' },
-      
+
       // Master Data
       { type: 'label', title: 'Master Data' },
+      { title: 'Data Alumni', icon: 'users', href: '/admin/alumni' },
       { title: 'Fakultas & Prodi', icon: 'graduation-cap', href: '/admin/fakultas-prodi' }, // Anda bisa memfilter view di page ini
       { title: 'Sektor Pekerjaan', icon: 'briefcase', href: '/admin/sektor-pekerjaan' },
-      
+
       // Berita & Event
       { type: 'label', title: 'Berita & Event' },
-      { title: 'Kelola Berita', icon: 'newspaper', href: '/admin/manage-news' },
-      { title: 'Kelola Event', icon: 'calendar', href: '/admin/manage-events' },
-      
+      { title: 'Kelola Berita', icon: 'newspaper', href: '/admin/news' },
+      { title: 'Kelola Event', icon: 'calendar', href: '/admin/events' },
+
       // Forum
       { type: 'label', title: 'Komunitas' },
-      { title: 'Forum Diskusi', icon: 'messages-square', href: '/forum' },
-      
-      { type: 'divider' },
+      { title: 'Forum Diskusi', icon: 'messages-square', href: '/admin/forum' },
+
+      { type: 'label', title: 'Pengaturan' },
+      { title: 'Logs System', icon: 'history', href: '/admin/logging' },
       { title: 'Pengaturan', icon: 'settings', href: '/admin/settings' },
     ];
   } else {
     navItems = [
       { title: 'Profil Saya', icon: 'user', href: '/profile' },
-      { title: 'Forum Diskusi', icon: 'messages-square', href: '/forum' }, // Menu baru untuk fitur X/Twitter
+      { title: 'Forum Diskusi', icon: 'messages-square', href: '/forum' },
+      { title: 'Direktori Alumni', icon: 'users', href: '/alumni-directory' },
       { title: 'Berita', icon: 'newspaper', href: '/news' },
       { title: 'Event', icon: 'calendar', href: '/events' },
     ];

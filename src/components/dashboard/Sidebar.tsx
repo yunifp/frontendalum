@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import * as LucideIcons from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
-// Perbarui Interface agar mendukung type 'label' dan 'divider'
 interface NavItem {
   type?: 'label' | 'divider';
   title?: string;
@@ -19,7 +19,6 @@ interface SidebarProps {
 }
 
 const DynamicIcon = ({ name, className }: { name: string; className?: string }) => {
-  // Mengubah kebab-case (layout-dashboard) ke PascalCase (LayoutDashboard)
   const formattedName = name
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -31,18 +30,28 @@ const DynamicIcon = ({ name, className }: { name: string; className?: string }) 
 
 export default function Sidebar({ isCollapsed, setIsCollapsed, navItems }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (
+      (user?.role === 'ADMIN_FAKULTAS' || user?.role === 'ADMIN_PRODI') && 
+      item.href === '/admin/sektor-pekerjaan'
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <aside
       className={`hidden border-r border-slate-200 bg-white transition-all duration-500 sm:flex flex-col shadow-sm ${isCollapsed ? 'w-20' : 'w-72'
         }`}
     >
-      {/* Header Sidebar */}
       <div className="flex h-20 items-center px-6 justify-between border-b border-slate-50">
         {!isCollapsed && (
           <div className="flex items-center gap-3 cursor-pointer">
             <img
-              src="/src/assets/logo.jpg"
+              src="/src/assets/logo.png"
               alt="Logo ITB"
               className="h-10 w-auto object-contain mix-blend-multiply"
             />
@@ -63,10 +72,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, navItems }: Sideb
         </Button>
       </div>
 
-      {/* Navigasi */}
       <nav className="flex flex-col gap-1 px-4 py-6 overflow-y-auto custom-scrollbar">
-        {navItems.map((item, index) => {
-          // 1. Render Label Kategori
+        {filteredNavItems.map((item, index) => {
           if (item.type === 'label') {
             return !isCollapsed ? (
               <div key={`label-${index}`} className="px-4 mt-6 mb-2">
@@ -79,12 +86,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, navItems }: Sideb
             );
           }
 
-          // 2. Render Divider
           if (item.type === 'divider') {
             return <hr key={`div-${index}`} className="my-3 border-slate-50 mx-4" />;
           }
 
-          // 3. Render Nav Item Biasa
           const isActive = location.pathname === item.href;
           return (
             <Link
@@ -103,7 +108,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, navItems }: Sideb
                 <span className="truncate">{item.title}</span>
               )}
 
-              {/* Tooltip sederhana saat collapsed (opsional) */}
               {isCollapsed && (
                 <div className="absolute left-full ml-4 rounded-md bg-indigo-950 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 font-medium">
                   {item.title}

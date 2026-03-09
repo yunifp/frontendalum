@@ -16,12 +16,41 @@ export interface Prodi {
     fakultas?: Fakultas;
 }
 
-export const useFakultasProdi = () => {
+export const useFakultasProdi = (isPublic: boolean = false) => {
     const [fakultasList, setFakultasList] = useState<Fakultas[]>([]);
     const [prodiList, setProdiList] = useState<Prodi[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const fetchPublicFakultas = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const { data } = await api.post('/master/fakultas-prodi/public/fakultas', { action: 'GET_ALL' });
+            setFakultasList(data.data);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal memuat data Fakultas');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    const fetchPublicProdi = useCallback(async (searchQuery = '', fakultasId?: number) => {
+        try {
+            setIsLoading(true);
+            const { data } = await api.post('/master/fakultas-prodi/public/prodi', { 
+                action: 'GET_ALL',
+                search: searchQuery,
+                fakultasId
+            });
+            setProdiList(data.data);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal memuat data Prodi');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // --- FUNGSI PRIVATE (Butuh Token) ---
     const fetchFakultas = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -50,11 +79,18 @@ export const useFakultasProdi = () => {
         }
     }, []);
 
+    // --- EFFECT: Panggil yang public ATAU private sesuai parameter ---
     useEffect(() => {
-        fetchFakultas();
-        fetchProdi();
-    }, [fetchFakultas, fetchProdi]);
+        if (isPublic) {
+            fetchPublicFakultas();
+            fetchPublicProdi();
+        } else {
+            fetchFakultas();
+            fetchProdi();
+        }
+    }, [isPublic, fetchPublicFakultas, fetchPublicProdi, fetchFakultas, fetchProdi]);
 
+    // --- FUNGSI MUTASI (Hanya Private) ---
     const handleCreateFakultas = async (nama: string) => {
         try {
             setIsProcessing(true);
@@ -70,7 +106,6 @@ export const useFakultasProdi = () => {
         }
     };
 
-    // FITUR BARU: Update Fakultas
     const handleUpdateFakultas = async (id: number, nama: string) => {
         try {
             setIsProcessing(true);
@@ -118,7 +153,6 @@ export const useFakultasProdi = () => {
         }
     };
 
-    // FITUR BARU: Update Prodi
     const handleUpdateProdi = async (id: number, nama: string, fakultas_id: number) => {
         try {
             setIsProcessing(true);
@@ -150,6 +184,7 @@ export const useFakultasProdi = () => {
 
     return {
         fakultasList, prodiList, isLoading, isProcessing,
+        fetchPublicFakultas, fetchPublicProdi, // Ekspor fungsi public
         fetchFakultas, handleCreateFakultas, handleUpdateFakultas, handleDeleteFakultas,
         fetchProdi, handleCreateProdi, handleUpdateProdi, handleDeleteProdi
     };
